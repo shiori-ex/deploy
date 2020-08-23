@@ -6,7 +6,7 @@ shiori is a web application to simply store, manage and search through links by 
 
 # Deployment
 
-Best practice is to deploy shiori with Docker and docker-compose. In this repository, you can find an example and ready-to-run [`docker-compose.yml`](docker.compose.yml).
+Best practice is to deploy shiori with Docker and docker-compose. In this repository, you can find an example and ready-to-run [`docker-compose.yml`](docker-compose.yml).
 
 You can use this as base to set up on or integrate this into your current infrastructure.
 
