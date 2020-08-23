@@ -1,0 +1,55 @@
+version: '3'
+
+services:
+
+  # Traefik as reverse proxy / edge router
+  traefik:
+    image: traefik:v2.2
+    command: --api.insecure=true --providers.docker
+    ports:
+      # The HTTP/S ports
+      - "80:80"
+      - "443:443"
+      # The Web UI (enabled by --api.insecure=true)
+      - "8080:8080"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  # Meilisearch database instance where the 
+  # shiori REST API gateway will connect to.
+  meilisearch:
+    image: 'getmeili/meilisearch:latest'
+    expose:
+      - '7700'
+    environment:
+      MEILI_MASTER_KEY: 'meilisearch_master_key'
+    volumes:
+      - './meilisearch/data.ms:/data.ms'
+    restart: always
+
+  # The shiori REST API gateway instance.
+  shiori-api:
+    image: 'shioriex/shiori:latest'
+    expose:
+      - '8080'
+    environment:
+      SHIORI_MEILI_ADDRESS: 'http://meilisearch:7700'
+      SHIORI_MEILI_KEY:     'meilisearch_master_key'
+      SHIORI_WS_TOKEN:      'shiori_access_token'
+      SHIORI_WS_PREFIX:     '/api'
+    restart: always
+    labels:
+      - 'traefik.http.routers.shiori-api.rule=PathPrefix(`/api`)'
+      - 'traefik.http.services.shiori-webapp.loadbalancer.server.port=8080'
+
+  # The shiori web frontend static server.
+  shiori-webapp:
+    image: 'shioriex/webapp:latest'
+    expose:
+      - '8080'
+    ports:
+      - '9090:8080'
+    restart: always
+    labels:
+      - 'traefik.http.routers.shiori-webapp.rule=PathPrefix(`/`)'
+      - 'traefik.http.services.shiori-webapp.loadbalancer.server.port=8080'
